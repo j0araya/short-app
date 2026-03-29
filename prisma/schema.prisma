@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Job {
+  id        String   @id @default(cuid())
+  status    String   @default("pending") // pending | processing | done | failed
+  sourceUrl String   @unique
+  title     String
+  thumbnail String?
+  niche     String
+  platform  String
+  videoPath String?
+  errorMsg  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  video     Video?
+}
+
+model Video {
+  id          String    @id @default(cuid())
+  jobId       String    @unique
+  job         Job       @relation(fields: [jobId], references: [id])
+  title       String
+  platform    String
+  externalId  String?
+  publishedAt DateTime?
+  viewCount   Int       @default(0)
+  likeCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Config {
+  id        String   @id @default("singleton")
+  data      String   // JSON string of ProjectConfig overrides
+  updatedAt DateTime @updatedAt
+}
