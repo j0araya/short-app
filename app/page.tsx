@@ -1,4 +1,5 @@
 import { JobQueue } from "@/components/dashboard/JobQueue";
+import { DriveCleanupButton } from "@/components/dashboard/DriveCleanupButton";
 
 async function getPipelineStatus() {
   try {
@@ -51,6 +52,19 @@ export default async function DashboardPage() {
       )}
 
       <JobQueue />
+
+      {/* Drive storage management */}
+      <div className="mt-8 pt-6 border-t border-[var(--color-border)]">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-[var(--color-text)]">Drive Storage</p>
+            <p className="text-xs text-[var(--color-muted)] mt-0.5">
+              clipshortnews@gmail.com · /shorts/
+            </p>
+          </div>
+          <DriveCleanupButton />
+        </div>
+      </div>
     </div>
   );
 }
