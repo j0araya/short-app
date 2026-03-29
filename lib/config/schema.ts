@@ -14,6 +14,21 @@ export const projectConfigSchema = z.object({
     format: z.literal("9:16"),
     tts: z.enum(["gtts", "elevenlabs"]),
   }),
+  youtube: z.object({
+    /** "public" | "unlisted" | "private" */
+    privacyStatus: z.enum(["public", "unlisted", "private"]).default("public"),
+    /** YouTube category ID — 28 = Science & Technology */
+    categoryId: z.string().default("28"),
+    /** Tags added to every upload */
+    tags: z.array(z.string()).default([]),
+    /** Description template — {title} is replaced with the video title */
+    descriptionTemplate: z.string().default("{title} #Shorts"),
+  }).default({
+    privacyStatus: "public",
+    categoryId: "28",
+    tags: [],
+    descriptionTemplate: "{title} #Shorts",
+  }),
 });
 
 export type ProjectConfig = z.infer<typeof projectConfigSchema>;

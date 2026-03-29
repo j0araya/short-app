@@ -22,6 +22,12 @@ const raw = {
     format: "9:16" as const,
     tts: "gtts" as const, // gtts | elevenlabs
   },
+  youtube: {
+    privacyStatus: "public" as const,  // public | unlisted | private
+    categoryId: "28",                   // 28 = Science & Technology
+    tags: ["shorts", "tech", "news", "ai"],
+    descriptionTemplate: "{title} #Shorts",
+  },
 };
 
 export const projectConfig = projectConfigSchema.parse(raw);

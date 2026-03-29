@@ -1,14 +1,32 @@
 /**
  * YouTubeAdapter
  *
- * Implements PlatformAdapter for YouTube Shorts.
- * Requires YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN in .env
+ * Uploads MP4 files to YouTube as Shorts via Data API v3 resumable upload.
+ * Config (privacyStatus, categoryId, tags, descriptionTemplate) comes from
+ * project.config.ts — nothing is hardcoded here.
  *
- * In v1 this is a stub — replace the upload method body with the real
- * YouTube Data API v3 resumable upload once OAuth is configured.
+ * Required env vars:
+ *   YOUTUBE_CLIENT_ID
+ *   YOUTUBE_CLIENT_SECRET
+ *   YOUTUBE_REFRESH_TOKEN
  */
 
+import fs from "fs";
+import { getYouTubeClient } from "./youtube-auth";
+import { projectConfig } from "@/project.config";
 import type { PlatformAdapter, PlatformStats, UploadResult } from "./types";
+
+function buildTitle(title: string): string {
+  const suffix = "#Shorts";
+  // YouTube title max is 100 chars
+  if (title.includes(suffix)) return title.slice(0, 100);
+  const candidate = `${title} ${suffix}`;
+  return candidate.length <= 100 ? candidate : `${title.slice(0, 100 - suffix.length - 1)} ${suffix}`;
+}
+
+function buildDescription(title: string, template: string): string {
+  return template.replace("{title}", title);
+}
 
 export class YouTubeAdapter implements PlatformAdapter {
   readonly platform = "youtube";
@@ -18,24 +36,69 @@ export class YouTubeAdapter implements PlatformAdapter {
     videoPath: string,
     title: string
   ): Promise<UploadResult> {
-    // TODO: implement real YouTube Data API v3 upload
-    // 1. Get OAuth2 token using refresh token from .env
-    // 2. POST to https://www.googleapis.com/upload/youtube/v3/videos
-    //    with part=snippet,status and #shorts in title/description
-    // 3. Return { externalId: video.id, url: `https://youtu.be/${video.id}`, platform }
+    if (!fs.existsSync(videoPath)) {
+      throw new Error(`[YouTubeAdapter] Video file not found: ${videoPath}`);
+    }
 
-    console.log(`[YouTubeAdapter] stub upload — jobId: ${jobId}, path: ${videoPath}`);
+    const yt = getYouTubeClient();
+    const { youtube: ytConfig } = projectConfig;
+
+    const shortsTitle = buildTitle(title);
+    const description = buildDescription(title, ytConfig.descriptionTemplate);
+
+    console.log(`[YouTubeAdapter] uploading "${shortsTitle}" (job: ${jobId})`);
+
+    const response = await yt.videos.insert({
+      part: ["snippet", "status"],
+      requestBody: {
+        snippet: {
+          title: shortsTitle,
+          description,
+          tags: ytConfig.tags,
+          categoryId: ytConfig.categoryId,
+        },
+        status: {
+          privacyStatus: ytConfig.privacyStatus,
+          selfDeclaredMadeForKids: false,
+        },
+      },
+      media: {
+        mimeType: "video/mp4",
+        body: fs.createReadStream(videoPath),
+      },
+    });
+
+    const videoId = response.data.id;
+    if (!videoId) {
+      throw new Error(`[YouTubeAdapter] Upload succeeded but no videoId returned for job ${jobId}`);
+    }
+
+    console.log(`[YouTubeAdapter] uploaded — https://youtu.be/${videoId}`);
 
     return {
-      externalId: `stub_${jobId}`,
-      url: `https://youtube.com/shorts/stub_${jobId}`,
+      externalId: videoId,
+      url: `https://youtube.com/shorts/${videoId}`,
       platform: this.platform,
     };
   }
 
   async getStats(externalId: string): Promise<PlatformStats> {
-    // TODO: implement YouTube Analytics API call
-    console.log(`[YouTubeAdapter] stub getStats — externalId: ${externalId}`);
-    return { views: 0, likes: 0 };
+    const yt = getYouTubeClient();
+
+    try {
+      const res = await yt.videos.list({
+        part: ["statistics"],
+        id: [externalId],
+      });
+
+      const stats = res.data.items?.[0]?.statistics;
+      return {
+        views: parseInt(stats?.viewCount ?? "0", 10),
+        likes: parseInt(stats?.likeCount ?? "0", 10),
+      };
+    } catch (err) {
+      console.error(`[YouTubeAdapter] getStats failed for ${externalId}:`, err);
+      return { views: 0, likes: 0 };
+    }
   }
 }
