@@ -91,4 +91,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ jobId: String(job._id) }, { status: 201 });
 }
-

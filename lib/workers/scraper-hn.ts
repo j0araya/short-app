@@ -164,4 +164,3 @@ export async function scrapeAndSaveCandidates(): Promise<{
 
   return { saved: saved.length, candidates: saved };
 }
-
