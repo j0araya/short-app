@@ -1,13 +1,13 @@
 import { ConfigForm } from "@/components/config/ConfigForm";
+import { connectDB, Config } from "@/lib/db";
+import { projectConfig } from "@/project.config";
 import type { ProjectConfig } from "@/lib/config/schema";
 
 async function getConfig(): Promise<ProjectConfig> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/config`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) throw new Error("Failed to load config");
-  return res.json();
+  await connectDB();
+  const stored = await Config.findOne({ id: "singleton" }).lean();
+  const overrides = stored ? JSON.parse(stored.data) : {};
+  return { ...projectConfig, ...overrides };
 }
 
 export default async function ConfigPage() {
