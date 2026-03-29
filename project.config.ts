@@ -11,8 +11,11 @@ import { projectConfigSchema } from "@/lib/config/schema";
 const raw = {
   name: "short-app",
   niche: "tech-news",
-  subreddits: ["technology", "programming", "artificial"],
-  sources: ["reddit"] as const,
+  sources: ["hackernews"] as const,
+  hn: {
+    feed: "topstories" as const,  // topstories | newstories | beststories
+    limit: 5,
+  },
   platforms: ["youtube"] as const,
   schedule: {
     frequency: "2h", // 30m | 1h | 2h | 6h | 12h | 24h

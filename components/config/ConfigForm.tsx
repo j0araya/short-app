@@ -119,31 +119,6 @@ function TagsInput({ value, onChange }: { value: string[]; onChange: (v: string[
   );
 }
 
-// Subreddits — same pattern as tags
-function SubredditsInput({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
-  const [input, setInput] = useState(value.join(", "));
-
-  function handleBlur() {
-    const parsed = input
-      .split(",")
-      .map((t) => t.trim().replace(/^r\//, ""))
-      .filter(Boolean);
-    onChange(parsed);
-    setInput(parsed.join(", "));
-  }
-
-  return (
-    <input
-      type="text"
-      value={input}
-      onChange={(e) => setInput(e.target.value)}
-      onBlur={handleBlur}
-      placeholder="technology, programming, artificial"
-      className={inputClass}
-    />
-  );
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 
 type FormState = Omit<ProjectConfig, "sources" | "platforms">;
@@ -152,7 +127,7 @@ export function ConfigForm({ initial }: { initial: ProjectConfig }) {
   const [form, setForm] = useState<FormState>({
     name: initial.name,
     niche: initial.niche,
-    subreddits: initial.subreddits,
+    hn: { ...initial.hn },
     schedule: { ...initial.schedule },
     video: { ...initial.video },
     youtube: { ...initial.youtube },
@@ -202,10 +177,25 @@ export function ConfigForm({ initial }: { initial: ProjectConfig }) {
 
       {/* ── Sources ────────────────────────────────────────────────────── */}
       <Section title="Sources">
-        <Field label="Subreddits" hint="Comma-separated, without r/ prefix">
-          <SubredditsInput
-            value={form.subreddits}
-            onChange={(v) => patch("subreddits", v)}
+        <Field label="HN feed">
+          <SelectInput
+            value={form.hn.feed}
+            onChange={(v) =>
+              patch("hn", { ...form.hn, feed: v as ProjectConfig["hn"]["feed"] })
+            }
+            options={[
+              { value: "topstories", label: "Top Stories" },
+              { value: "newstories", label: "New Stories" },
+              { value: "beststories", label: "Best Stories" },
+            ]}
+          />
+        </Field>
+        <Field label="Stories per run" hint="1–30">
+          <NumberInput
+            value={form.hn.limit}
+            onChange={(v) => patch("hn", { ...form.hn, limit: v })}
+            min={1}
+            max={30}
           />
         </Field>
       </Section>

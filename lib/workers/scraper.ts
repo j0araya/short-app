@@ -42,7 +42,8 @@ export async function scrapeReddit(): Promise<ScrapedPost[]> {
   await connectDB();
 
   const reddit = getRedditClient();
-  const { subreddits } = projectConfig;
+  // Hardcoded fallback — this scraper is deprecated, use scraper-hn.ts instead
+  const subreddits = ["technology"];
 
   // Fetch already-processed source URLs to avoid duplicates
   const existing = await Job.find({}, { sourceUrl: 1, _id: 0 }).lean();

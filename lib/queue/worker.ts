@@ -9,7 +9,7 @@
 
 import { Worker } from "bullmq";
 import { redisConnection } from "./client";
-import { scrapeReddit } from "@/lib/workers/scraper";
+import { scrapeHN } from "@/lib/workers/scraper-hn";
 import { generateVideo } from "@/lib/workers/video-gen";
 import { uploadVideo } from "@/lib/workers/uploader";
 import { connectDB, Job } from "@/lib/db";
@@ -24,7 +24,7 @@ export const pipelineWorker = new Worker(
       await connectDB();
 
       // Step 1: Scrape
-      const posts = await scrapeReddit();
+      const posts = await scrapeHN();
       if (posts.length === 0) {
         console.log("[worker] no new posts found — job complete with 0 items");
         return { processed: 0 };
