@@ -35,7 +35,10 @@ function estimateDuration(text: string): number {
   return Math.ceil(words / 2.5);
 }
 
-export async function generateTTS(jobId: string, text: string): Promise<TTSResult> {
+export async function generateTTS(
+  jobId: string,
+  text: string,
+): Promise<TTSResult> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     throw new Error("ELEVENLABS_API_KEY is not set in .env");
@@ -44,7 +47,9 @@ export async function generateTTS(jobId: string, text: string): Promise<TTSResul
   const voiceId = process.env.ELEVENLABS_VOICE_ID ?? DEFAULT_VOICE_ID;
   const url = `${ELEVENLABS_BASE}/text-to-speech/${voiceId}`;
 
-  console.log(`[tts] generating audio for job ${jobId} — "${text.slice(0, 60)}…"`);
+  console.log(
+    `[tts] generating audio for job ${jobId} — "${text.slice(0, 60)}…"`,
+  );
 
   const res = await fetch(url, {
     method: "POST",
