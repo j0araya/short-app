@@ -7,16 +7,13 @@
     "build": "next build",
     "start": "next start",
     "worker": "npx tsx lib/queue/worker.ts",
-    "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate",
-    "db:studio": "prisma studio"
+    "db:seed": "npx tsx lib/db/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^7.6.0",
     "bullmq": "^5.71.1",
     "ioredis": "^5.10.1",
+    "mongoose": "^9.3.3",
     "next": "16.2.1",
-    "prisma": "^7.6.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "snoowrap": "^1.23.0",

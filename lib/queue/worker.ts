@@ -12,7 +12,7 @@ import { redisConnection } from "./client";
 import { scrapeReddit } from "@/lib/workers/scraper";
 import { generateVideo } from "@/lib/workers/video-gen";
 import { uploadVideo } from "@/lib/workers/uploader";
-import { prisma } from "@/lib/db/prisma";
+import { connectDB, Job } from "@/lib/db";
 import { projectConfig } from "@/project.config";
 
 export const pipelineWorker = new Worker(
@@ -21,6 +21,8 @@ export const pipelineWorker = new Worker(
     console.log(`[worker] processing job ${job.id}, type: ${job.name}`);
 
     if (job.name === "pipeline:run") {
+      await connectDB();
+
       // Step 1: Scrape
       const posts = await scrapeReddit();
       if (posts.length === 0) {
@@ -33,36 +35,28 @@ export const pipelineWorker = new Worker(
       for (const post of posts) {
         const platform = projectConfig.platforms[0]; // use first configured platform
 
-        const dbJob = await prisma.job.create({
-          data: {
-            title: post.title,
-            sourceUrl: post.url,
-            thumbnail: post.thumbnail,
-            niche: projectConfig.niche,
-            platform,
-            status: "processing",
-          },
+        const dbJob = await Job.create({
+          title: post.title,
+          sourceUrl: post.url,
+          thumbnail: post.thumbnail,
+          niche: projectConfig.niche,
+          platform,
+          status: "processing",
         });
 
         try {
-          const { videoPath } = await generateVideo(dbJob.id, post.title, post.thumbnail);
+          const { videoPath } = await generateVideo(String(dbJob._id), post.title, post.thumbnail);
 
-          await prisma.job.update({
-            where: { id: dbJob.id },
-            data: { videoPath, status: "processing" },
-          });
+          await Job.findByIdAndUpdate(dbJob._id, { videoPath, status: "processing" });
 
-          await uploadVideo(dbJob.id);
+          await uploadVideo(String(dbJob._id));
           processed++;
         } catch (err) {
-          await prisma.job.update({
-            where: { id: dbJob.id },
-            data: {
-              status: "failed",
-              errorMsg: err instanceof Error ? err.message : String(err),
-            },
+          await Job.findByIdAndUpdate(dbJob._id, {
+            status: "failed",
+            errorMsg: err instanceof Error ? err.message : String(err),
           });
-          console.error(`[worker] job ${dbJob.id} failed:`, err);
+          console.error(`[worker] job ${dbJob._id} failed:`, err);
         }
       }
 

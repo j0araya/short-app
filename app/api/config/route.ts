@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db/prisma";
+import { connectDB, Config } from "@/lib/db";
 import { projectConfig } from "@/project.config";
 import { projectConfigSchema } from "@/lib/config/schema";
 
 export async function GET() {
-  const stored = await prisma.config.findUnique({ where: { id: "singleton" } });
+  await connectDB();
+
+  const stored = await Config.findOne({ id: "singleton" }).lean();
   const overrides = stored ? JSON.parse(stored.data) : {};
 
   return NextResponse.json({ ...projectConfig, ...overrides });
@@ -18,11 +20,13 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  await prisma.config.upsert({
-    where: { id: "singleton" },
-    update: { data: JSON.stringify(parsed.data) },
-    create: { id: "singleton", data: JSON.stringify(parsed.data) },
-  });
+  await connectDB();
+
+  await Config.findOneAndUpdate(
+    { id: "singleton" },
+    { id: "singleton", data: JSON.stringify(parsed.data) },
+    { upsert: true, new: true }
+  );
 
   return NextResponse.json({ success: true, saved: parsed.data });
 }

@@ -1,31 +1,68 @@
-import type { Video, Job } from "../generated/prisma/client";
-import { prisma } from "@/lib/db/prisma";
+import { connectDB, Video, Job } from "@/lib/db";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
+import { Types } from "mongoose";
 
-type VideoWithJob = Video & { job: Job };
+// Plain object types returned by .lean() — no Mongoose Document overhead
+interface LeanVideo {
+  _id: Types.ObjectId;
+  jobId: Types.ObjectId;
+  title: string;
+  platform: string;
+  externalId: string;
+  viewCount: number;
+  publishedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface LeanJob {
+  _id: Types.ObjectId;
+  title: string;
+  sourceUrl: string;
+  thumbnail: string | null;
+  niche: string;
+  platform: string;
+  status: string;
+  videoPath: string | null;
+  errorMsg: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+type VideoWithJob = LeanVideo & { job: LeanJob | null };
 
 export default async function HistoryPage() {
-  const videos = await prisma.video.findMany({
-    orderBy: { publishedAt: "desc" },
-    take: 50,
-    include: { job: true },
-  });
+  await connectDB();
+
+  const videos = (await Video.find()
+    .sort({ publishedAt: -1 })
+    .limit(50)
+    .lean()) as unknown as LeanVideo[];
+
+  const jobIds = videos.map((v) => v.jobId);
+  const jobs = (await Job.find({ _id: { $in: jobIds } }).lean()) as unknown as LeanJob[];
+  const jobMap = new Map(jobs.map((j) => [String(j._id), j]));
+
+  const videosWithJobs: VideoWithJob[] = videos.map((v) => ({
+    ...v,
+    job: jobMap.get(String(v.jobId)) ?? null,
+  }));
 
   return (
     <div className="p-8">
       <h1 className="text-xl font-semibold text-[var(--color-text)] mb-2">History</h1>
       <p className="text-sm text-[var(--color-muted)] mb-8">Published videos</p>
 
-      {videos.length === 0 ? (
+      {videosWithJobs.length === 0 ? (
         <p className="text-sm text-[var(--color-muted)]">No videos published yet.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {videos.map((video: VideoWithJob) => (
+          {videosWithJobs.map((video) => (
             <div
-              key={video.id}
+              key={String(video._id)}
               className="rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden"
             >
-              {video.job.thumbnail && (
+              {video.job?.thumbnail && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={video.job.thumbnail}

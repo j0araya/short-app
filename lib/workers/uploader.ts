@@ -6,10 +6,13 @@
  */
 
 import { getAdapter } from "@/lib/adapters";
-import { prisma } from "@/lib/db/prisma";
+import { connectDB, Job, Video } from "@/lib/db";
 
 export async function uploadVideo(jobId: string): Promise<void> {
-  const job = await prisma.job.findUniqueOrThrow({ where: { id: jobId } });
+  await connectDB();
+
+  const job = await Job.findById(jobId).lean();
+  if (!job) throw new Error(`Job ${jobId} not found`);
 
   if (!job.videoPath) {
     throw new Error(`Job ${jobId} has no videoPath set. Run video generation first.`);
@@ -18,18 +21,13 @@ export async function uploadVideo(jobId: string): Promise<void> {
   const adapter = getAdapter(job.platform);
   const result = await adapter.upload(jobId, job.videoPath, job.title);
 
-  await prisma.video.create({
-    data: {
-      jobId,
-      title: job.title,
-      platform: result.platform,
-      externalId: result.externalId,
-      publishedAt: new Date(),
-    },
+  await Video.create({
+    jobId: job._id,
+    title: job.title,
+    platform: result.platform,
+    externalId: result.externalId,
+    publishedAt: new Date(),
   });
 
-  await prisma.job.update({
-    where: { id: jobId },
-    data: { status: "done" },
-  });
+  await Job.findByIdAndUpdate(jobId, { status: "done" });
 }

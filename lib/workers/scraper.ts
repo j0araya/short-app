@@ -7,7 +7,7 @@
  */
 
 import Snoowrap from "snoowrap";
-import { prisma } from "@/lib/db/prisma";
+import { connectDB, Job } from "@/lib/db";
 import { projectConfig } from "@/project.config";
 
 export interface ScrapedPost {
@@ -39,14 +39,14 @@ function getRedditClient(): Snoowrap {
 }
 
 export async function scrapeReddit(): Promise<ScrapedPost[]> {
+  await connectDB();
+
   const reddit = getRedditClient();
   const { subreddits } = projectConfig;
 
   // Fetch already-processed source URLs to avoid duplicates
-  const existing = await prisma.job.findMany({
-    select: { sourceUrl: true },
-  });
-  const existingUrls = new Set(existing.map((j: { sourceUrl: string }) => j.sourceUrl));
+  const existing = await Job.find({}, { sourceUrl: 1, _id: 0 }).lean();
+  const existingUrls = new Set(existing.map((j) => j.sourceUrl));
 
   const results: ScrapedPost[] = [];
 

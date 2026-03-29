@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db/prisma";
+import { connectDB, Job } from "@/lib/db";
 import { uploadVideo } from "@/lib/workers/uploader";
 
 export async function POST(
@@ -8,7 +8,9 @@ export async function POST(
 ) {
   const { id } = await params;
 
-  const job = await prisma.job.findUnique({ where: { id } });
+  await connectDB();
+
+  const job = await Job.findById(id).lean();
   if (!job) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
