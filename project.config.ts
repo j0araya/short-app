@@ -20,7 +20,7 @@ const raw = {
   video: {
     durationSeconds: 60,
     format: "9:16" as const,
-    tts: "gtts" as const, // gtts | elevenlabs
+    tts: "elevenlabs" as const, // gtts | elevenlabs
   },
   youtube: {
     privacyStatus: "public" as const,  // public | unlisted | private
