@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB, Job, Video, Candidate } from "@/lib/db";
 import { pipelineQueue } from "@/lib/queue/client";
 import { projectConfig } from "@/project.config";
-import type { ContentType } from "@/lib/db/models/Job";
+import type { ContentType, VideoStyle } from "@/lib/db/models/Job";
 
 export async function GET() {
   await connectDB();
@@ -38,10 +38,11 @@ export async function POST(req: NextRequest) {
   const body = await req.json() as {
     candidateId: string;
     contentType?: ContentType;
+    videoStyle?: VideoStyle;
     platforms?: string[];
   };
 
-  const { candidateId, contentType = "short_video", platforms } = body;
+  const { candidateId, contentType = "short_video", videoStyle = "narrative", platforms } = body;
 
   if (!candidateId) {
     return NextResponse.json({ error: "candidateId is required" }, { status: 400 });
@@ -70,9 +71,11 @@ export async function POST(req: NextRequest) {
     articleUrl: candidate.articleUrl,
     hasVideo: candidate.hasVideo,
     thumbnail: candidate.ogImageUrl,
+    score: candidate.score,
     niche: projectConfig.niche,
     platform,
     contentType,
+    videoStyle,
     status: "pending",
   });
 
@@ -82,12 +85,10 @@ export async function POST(req: NextRequest) {
     selectedAt: new Date(),
   });
 
-  // Enqueue generation
+  // Enqueue generation — the worker will set status to "processing" when it starts
   await pipelineQueue.add("generate:single", { jobId: String(job._id) }, {
     jobId: `generate-${String(job._id)}`,
   });
-
-  await Job.findByIdAndUpdate(job._id, { status: "processing" });
 
   return NextResponse.json({ jobId: String(job._id) }, { status: 201 });
 }

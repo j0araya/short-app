@@ -7,6 +7,7 @@ import { connectDB, Video } from "@/lib/db";
  * Returns videos saved to Drive, ordered by creation date desc.
  * Query params:
  *   ?status=pending_publish|published   (default: all)
+ *   ?jobId=<jobId>                      filter by job ID
  *   ?limit=20                           (default: 20, max: 100)
  *   ?page=1
  */
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = req.nextUrl;
   const status = searchParams.get("status") ?? undefined;
+  const jobId = searchParams.get("jobId") ?? undefined;
   const limit = Math.min(Number(searchParams.get("limit") ?? 20), 100);
   const page = Math.max(Number(searchParams.get("page") ?? 1), 1);
 
@@ -22,9 +24,13 @@ export async function GET(req: NextRequest) {
   if (status === "pending_publish" || status === "published") {
     filter.publishStatus = status;
   }
+  if (jobId) {
+    filter.jobId = jobId;
+  }
 
   const [videos, total] = await Promise.all([
     Video.find(filter)
+      .populate("jobId", "title videoPath carouselPaths status contentType videoStyle")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)

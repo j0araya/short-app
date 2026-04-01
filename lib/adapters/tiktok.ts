@@ -22,7 +22,7 @@
 import fs from "fs";
 import { getTikTokToken } from "./tiktok-auth";
 import { projectConfig } from "@/project.config";
-import type { PlatformAdapter, PlatformStats, UploadResult } from "./types";
+import type { PlatformAdapter, PlatformStats, UploadMeta, UploadResult } from "./types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -133,7 +133,7 @@ async function initUpload(
     accessToken,
     {
       post_info: {
-        title: opts.title.slice(0, 150), // TikTok title max 150 chars
+        title: opts.title.slice(0, 2200), // TikTok caption max 2200 chars
         privacy_level: opts.privacyLevel,
         disable_comment: opts.disableComment,
         disable_duet: opts.disableDuet,
@@ -238,7 +238,8 @@ export class TikTokAdapter implements PlatformAdapter {
   async upload(
     jobId: string,
     videoPath: string,
-    title: string
+    title: string,
+    meta?: UploadMeta
   ): Promise<UploadResult> {
     if (!fs.existsSync(videoPath)) {
       throw new Error(`[TikTokAdapter] Video file not found: ${videoPath}`);
@@ -272,8 +273,14 @@ export class TikTokAdapter implements PlatformAdapter {
       : creatorInfo.privacy_level_options[0];
 
     // 2. Init upload
+    // TikTok's "title" field is the post caption (max 150 chars).
+    // Use the pre-generated description if available, otherwise fall back to raw title.
+    const postTitle = meta?.description
+      ? `${meta.description}${meta.hashtags ? ` ${meta.hashtags}` : ""}`.slice(0, 2200)
+      : title;
+
     const { publish_id, upload_url } = await initUpload(accessToken, {
-      title,
+      title: postTitle,
       videoSize,
       chunkSize: CHUNK_SIZE,
       totalChunkCount: totalChunks,

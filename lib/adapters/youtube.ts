@@ -14,7 +14,7 @@
 import fs from "fs";
 import { getYouTubeClient } from "./youtube-auth";
 import { projectConfig } from "@/project.config";
-import type { PlatformAdapter, PlatformStats, UploadResult } from "./types";
+import type { PlatformAdapter, PlatformStats, UploadMeta, UploadResult } from "./types";
 
 function buildTitle(title: string): string {
   const suffix = "#Shorts";
@@ -24,8 +24,19 @@ function buildTitle(title: string): string {
   return candidate.length <= 100 ? candidate : `${title.slice(0, 100 - suffix.length - 1)} ${suffix}`;
 }
 
-function buildDescription(title: string, template: string): string {
-  return template.replace("{title}", title);
+/**
+ * Builds the final YouTube description.
+ * Uses the pre-generated description + hashtags when available;
+ * falls back to the project.config descriptionTemplate otherwise.
+ */
+function buildDescription(title: string, meta?: UploadMeta): string {
+  if (meta?.description) {
+    const hashtags = meta.hashtags ? `\n\n${meta.hashtags}` : "";
+    // YouTube description max is 5000 chars
+    return `${meta.description}${hashtags}`.slice(0, 5000);
+  }
+  // Fallback: use the static template from project.config
+  return projectConfig.youtube.descriptionTemplate.replace("{title}", title);
 }
 
 export class YouTubeAdapter implements PlatformAdapter {
@@ -34,7 +45,8 @@ export class YouTubeAdapter implements PlatformAdapter {
   async upload(
     jobId: string,
     videoPath: string,
-    title: string
+    title: string,
+    meta?: UploadMeta
   ): Promise<UploadResult> {
     if (!fs.existsSync(videoPath)) {
       throw new Error(`[YouTubeAdapter] Video file not found: ${videoPath}`);
@@ -44,9 +56,12 @@ export class YouTubeAdapter implements PlatformAdapter {
     const { youtube: ytConfig } = projectConfig;
 
     const shortsTitle = buildTitle(title);
-    const description = buildDescription(title, ytConfig.descriptionTemplate);
+    const description = buildDescription(title, meta);
 
     console.log(`[YouTubeAdapter] uploading "${shortsTitle}" (job: ${jobId})`);
+    if (meta?.description) {
+      console.log(`[YouTubeAdapter] using generated description (${description.length} chars)`);
+    }
 
     const response = await yt.videos.insert({
       part: ["snippet", "status"],

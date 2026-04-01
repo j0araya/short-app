@@ -1,14 +1,15 @@
 /**
  * Google Drive upload helper
  *
- * Structure:
- *   /shorts/
- *     2026-03-28/
- *       youtube_20260328_titulo.mp4
- *       tiktok_20260328_titulo.mp4
+ * Folder structure:
+ *   shorts/
+ *     2026-03-29/          ← date
+ *       youtube/           ← platform
+ *         title_desc.mp4   ← sanitized title + short description slug
+ *       tiktok/
+ *         title_desc.mp4
  *
- * Root folder "shorts" is looked up by name and created if missing.
- * Daily sub-folders are created on demand and reused across uploads.
+ * Root "shorts" and all sub-folders are created on demand and reused.
  */
 
 import fs from "fs";
@@ -58,19 +59,44 @@ async function findOrCreateFolder(name: string, parentId?: string): Promise<stri
 }
 
 function todayLabel(): string {
-  return new Date().toISOString().slice(0, 10); // "2026-03-28"
+  return new Date().toISOString().slice(0, 10); // "2026-03-29"
 }
 
-function dateCompact(): string {
-  return todayLabel().replace(/-/g, ""); // "20260328"
-}
-
-function sanitizeTitle(title: string): string {
-  return title
+/**
+ * Sanitizes a string for use as a filename segment.
+ * Lowercases, replaces non-alphanumeric with underscores, trims edges.
+ */
+function slugify(text: string, maxLen = 40): string {
+  return text
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
-    .slice(0, 50)
-    .replace(/^_|_$/g, "");
+    .slice(0, maxLen)
+    .replace(/^_+|_+$/g, "");
+}
+
+/**
+ * Builds a short keyword slug from a title — used as the filename.
+ * Filters common stop-words, takes the first `maxWords` meaningful words.
+ * Example: "OpenAI releases GPT-5 with multimodal reasoning" → "openai_releases_gpt5_multimodal_reasoning"
+ */
+function shortDescSlug(title: string, maxWords = 6): string {
+  const STOP = new Set(["a", "an", "the", "of", "in", "on", "at", "to", "for", "and", "or", "is", "are", "was", "with", "by", "from", "as", "its"]);
+  const words = title
+    .split(/\s+/)
+    .map((w) => w.replace(/[^a-zA-Z0-9]/g, "").toLowerCase())
+    .filter((w) => w.length > 1 && !STOP.has(w));
+
+  const slug = words.slice(0, maxWords).join("_");
+  return slug.slice(0, 60) || slugify(title, 60);
+}
+
+// ── MIME helper ───────────────────────────────────────────────────────────────
+
+function mimeForExt(ext: string): string {
+  if (ext === ".png")                return "image/png";
+  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+  if (ext === ".mp4")                return "video/mp4";
+  return "application/octet-stream";
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
@@ -82,35 +108,39 @@ export async function uploadToDrive(
 ): Promise<DriveUploadResult> {
   const drive = getDriveClient();
 
-  // 1. Ensure /shorts root folder exists
+  // 1. /shorts
   const rootId = await findOrCreateFolder(DRIVE_ROOT_FOLDER);
 
-  // 2. Ensure /shorts/YYYY-MM-DD/ folder exists
-  const dayLabel = todayLabel();
-  const dayFolderId = await findOrCreateFolder(dayLabel, rootId);
+  // 2. /shorts/YYYY-MM-DD
+  const dayFolderId = await findOrCreateFolder(todayLabel(), rootId);
 
-  // 3. Build filename: platform_YYYYMMDD_sanitized_title.mp4
-  const ext = path.extname(videoPath) || ".mp4";
-  const fileName = `${platform}_${dateCompact()}_${sanitizeTitle(title)}${ext}`;
+  // 3. /shorts/YYYY-MM-DD/<platform>
+  const platformFolderId = await findOrCreateFolder(platform, dayFolderId);
 
-  // 4. Upload the file
+  // 4. Filename: keyword slug derived from the title (5 key words, no stop-words).
+  //    Date and platform live in the folder path — no need to repeat them here.
+  const ext      = path.extname(videoPath) || ".mp4";
+  const fileName = shortDescSlug(title, 6) + ext;
+
+  // 5. Upload
   const fileStream = fs.createReadStream(videoPath);
-  const mimeType = ext === ".mp4" ? "video/mp4" : "video/quicktime";
 
   const uploaded = await drive.files.create({
     requestBody: {
       name: fileName,
-      parents: [dayFolderId],
+      parents: [platformFolderId],
     },
     media: {
-      mimeType,
-      body: fileStream,
+      mimeType: mimeForExt(ext),
+      body:     fileStream,
     },
     fields: "id, webViewLink",
   });
 
-  const fileId = uploaded.data.id as string;
-  const webViewLink = uploaded.data.webViewLink ?? `https://drive.google.com/file/d/${fileId}/view`;
+  const fileId      = uploaded.data.id as string;
+  const webViewLink = uploaded.data.webViewLink
+    ?? `https://drive.google.com/file/d/${fileId}/view`;
 
-  return { fileId, folderId: dayFolderId, webViewLink };
+  return { fileId, folderId: platformFolderId, webViewLink };
 }
+

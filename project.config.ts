@@ -14,9 +14,9 @@ const raw = {
   sources: ["hackernews"] as const,
   hn: {
     feed: "topstories" as const,  // topstories | newstories | beststories
-    limit: 5,
+    limit: 20,
   },
-  platforms: ["youtube"] as const,
+  platforms: ["youtube", "gemini"] as const,
   schedule: {
     frequency: "2h", // 30m | 1h | 2h | 6h | 12h | 24h
   },

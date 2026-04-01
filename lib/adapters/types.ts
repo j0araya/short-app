@@ -17,8 +17,16 @@ export interface PlatformStats {
   likes: number;
 }
 
+/** Optional metadata passed to the adapter at publish time */
+export interface UploadMeta {
+  /** Pre-generated description/caption for this platform */
+  description?: string;
+  /** Pre-generated hashtags string, e.g. "#Shorts #tech #AI" */
+  hashtags?: string;
+}
+
 export interface PlatformAdapter {
   readonly platform: string;
-  upload(jobId: string, videoPath: string, title: string): Promise<UploadResult>;
+  upload(jobId: string, videoPath: string, title: string, meta?: UploadMeta): Promise<UploadResult>;
   getStats(externalId: string): Promise<PlatformStats>;
 }

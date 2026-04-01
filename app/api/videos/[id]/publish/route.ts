@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Video } from "@/lib/db";
+import { connectDB, Video, ActivityEvent } from "@/lib/db";
 import { getAdapter } from "@/lib/adapters";
+import type { UploadMeta } from "@/lib/adapters/types";
 import fs from "fs";
 
 /**
@@ -54,12 +55,38 @@ export async function POST(
 
   try {
     const adapter = getAdapter(video.platform);
-    const result = await adapter.upload(String(job._id), videoPath, video.title);
+
+    // Build platform-specific metadata from the pre-generated fields on Video
+    const meta: UploadMeta = {};
+    if (video.platform === "youtube") {
+      meta.description = video.youtubeDescription ?? undefined;
+      meta.hashtags = video.youtubeHashtags ?? undefined;
+    } else if (video.platform === "tiktok") {
+      meta.description = video.tiktokDescription ?? undefined;
+      meta.hashtags = video.tiktokHashtags ?? undefined;
+    } else if (video.platform === "instagram") {
+      meta.description = video.instagramCaption ?? undefined;
+      meta.hashtags = video.instagramHashtags ?? undefined;
+    }
+
+    const result = await adapter.upload(String(job._id), videoPath, video.title, meta);
 
     video.externalId = result.externalId;
     video.publishStatus = "published";
     video.publishedAt = new Date();
     await video.save();
+
+    // Emit activity event — video is now live
+    try {
+      await ActivityEvent.create({
+        type: "video_published",
+        title: video.title,
+        platform: result.platform,
+        url: result.url,
+        jobId: job._id,
+        videoId: video._id,
+      });
+    } catch { /* non-fatal */ }
 
     return NextResponse.json({
       externalId: result.externalId,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { ContentType } from "@/lib/db/models/Job";
+import type { ContentType, VideoStyle } from "@/lib/db/models/Job";
 
 interface Candidate {
   _id: string;
@@ -33,6 +33,17 @@ const CONTENT_TYPE_LABELS: Record<ContentType, { label: string; desc: string; ic
   },
 };
 
+const VIDEO_STYLE_LABELS: Record<VideoStyle, { label: string; desc: string }> = {
+  narrative: {
+    label: "Narrativo",
+    desc: "Hook → Contexto → Detalle → CTA (4 slides)",
+  },
+  list: {
+    label: "Lista / Did you know?",
+    desc: "Hook + 4 hechos numerados + CTA (6 slides)",
+  },
+};
+
 const PLATFORMS = [
   { id: "youtube", label: "YouTube" },
   { id: "tiktok", label: "TikTok" },
@@ -51,6 +62,8 @@ function CandidateCard({
   onToggle,
   contentType,
   onContentTypeChange,
+  videoStyle,
+  onVideoStyleChange,
   platforms,
   onPlatformsChange,
   generateState,
@@ -61,6 +74,8 @@ function CandidateCard({
   onToggle: () => void;
   contentType: ContentType;
   onContentTypeChange: (ct: ContentType) => void;
+  videoStyle: VideoStyle;
+  onVideoStyleChange: (vs: VideoStyle) => void;
   platforms: string[];
   onPlatformsChange: (p: string[]) => void;
   generateState: GenerateState;
@@ -172,6 +187,36 @@ function CandidateCard({
             </div>
           </div>
 
+          {/* Video style selector — only for short_video and instagram_reel */}
+          {(contentType === "short_video" || contentType === "instagram_reel") && (
+            <div>
+              <p className="text-xs font-medium text-[var(--color-muted)] mb-2 uppercase tracking-wider">
+                Estilo
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(VIDEO_STYLE_LABELS) as VideoStyle[]).map((vsKey) => {
+                  const info = VIDEO_STYLE_LABELS[vsKey];
+                  return (
+                    <button
+                      key={vsKey}
+                      onClick={() => onVideoStyleChange(vsKey)}
+                      className={`text-left p-2 rounded-lg border text-xs transition-all ${
+                        videoStyle === vsKey
+                          ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-text)]"
+                          : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]/50"
+                      }`}
+                    >
+                      <span className="font-semibold">{info.label}</span>
+                      <span className="block text-[10px] opacity-70 leading-tight mt-0.5">
+                        {info.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Platform selector */}
           <div>
             <p className="text-xs font-medium text-[var(--color-muted)] mb-2 uppercase tracking-wider">
@@ -243,6 +288,7 @@ export function SelectPage() {
   // Per-candidate state
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [contentTypes, setContentTypes] = useState<Record<string, ContentType>>({});
+  const [videoStyles, setVideoStyles] = useState<Record<string, VideoStyle>>({});
   const [platforms, setPlatforms] = useState<Record<string, string[]>>({});
   const [generateStates, setGenerateStates] = useState<Record<string, GenerateState>>({});
 
@@ -272,6 +318,9 @@ export function SelectPage() {
         // Set defaults
         if (!contentTypes[id]) {
           setContentTypes((ct) => ({ ...ct, [id]: "short_video" }));
+        }
+        if (!videoStyles[id]) {
+          setVideoStyles((vs) => ({ ...vs, [id]: "narrative" }));
         }
         if (!platforms[id]) {
           setPlatforms((p) => ({ ...p, [id]: ["youtube"] }));
@@ -307,6 +356,7 @@ export function SelectPage() {
         body: JSON.stringify({
           candidateId,
           contentType: contentTypes[candidateId] ?? "short_video",
+          videoStyle: videoStyles[candidateId] ?? "narrative",
           platforms: platforms[candidateId] ?? ["youtube"],
         }),
       });
@@ -399,6 +449,10 @@ export function SelectPage() {
               contentType={contentTypes[candidate._id] ?? "short_video"}
               onContentTypeChange={(ct) =>
                 setContentTypes((prev) => ({ ...prev, [candidate._id]: ct }))
+              }
+              videoStyle={videoStyles[candidate._id] ?? "narrative"}
+              onVideoStyleChange={(vs) =>
+                setVideoStyles((prev) => ({ ...prev, [candidate._id]: vs }))
               }
               platforms={platforms[candidate._id] ?? ["youtube"]}
               onPlatformsChange={(p) =>

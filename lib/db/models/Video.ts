@@ -16,10 +16,18 @@ export interface IVideo extends Document {
   publishStatus: PublishStatus;
   sourceArticleUrl: string | null; // original article / YT video URL
   hasVideo: boolean;               // true if source was a YouTube video
-  /** Generated Instagram caption (null for YouTube Shorts) */
+  /** Generated Instagram caption */
   instagramCaption: string | null;
-  /** Generated hashtags string, e.g. "#tech #ai #shorts" */
+  /** Generated Instagram hashtags string, e.g. "#tech #ai #reels" */
   instagramHashtags: string | null;
+  /** Generated YouTube description (with article URL + CTA) */
+  youtubeDescription: string | null;
+  /** Generated YouTube hashtags string, e.g. "#Shorts #tech #AI" */
+  youtubeHashtags: string | null;
+  /** Generated TikTok description */
+  tiktokDescription: string | null;
+  /** Generated TikTok hashtags */
+  tiktokHashtags: string | null;
   /** Google Drive file ID (null if Drive upload was skipped or failed) */
   driveFileId: string | null;
   /** Google Drive parent folder ID for the daily folder */
@@ -52,6 +60,10 @@ const VideoSchema = new Schema<IVideo>(
     hasVideo: { type: Boolean, default: false },
     instagramCaption: { type: String, default: null },
     instagramHashtags: { type: String, default: null },
+    youtubeDescription: { type: String, default: null },
+    youtubeHashtags: { type: String, default: null },
+    tiktokDescription: { type: String, default: null },
+    tiktokHashtags: { type: String, default: null },
     driveFileId: { type: String, default: null },
     driveFolderId: { type: String, default: null },
     driveWebViewLink: { type: String, default: null },

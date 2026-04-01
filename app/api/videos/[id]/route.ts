@@ -35,14 +35,26 @@ export async function PATCH(
   const body = await req.json() as {
     instagramCaption?: string;
     instagramHashtags?: string;
+    youtubeDescription?: string;
+    youtubeHashtags?: string;
+    tiktokDescription?: string;
+    tiktokHashtags?: string;
   };
 
+  const ALLOWED = [
+    "instagramCaption",
+    "instagramHashtags",
+    "youtubeDescription",
+    "youtubeHashtags",
+    "tiktokDescription",
+    "tiktokHashtags",
+  ] as const;
+
   const update: Record<string, string> = {};
-  if (typeof body.instagramCaption === "string") {
-    update.instagramCaption = body.instagramCaption;
-  }
-  if (typeof body.instagramHashtags === "string") {
-    update.instagramHashtags = body.instagramHashtags;
+  for (const key of ALLOWED) {
+    if (typeof body[key] === "string") {
+      update[key] = body[key] as string;
+    }
   }
 
   if (Object.keys(update).length === 0) {

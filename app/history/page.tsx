@@ -1,6 +1,6 @@
 import { connectDB, Video, Job } from "@/lib/db";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
-import { PublishButton } from "@/components/history/PublishButton";
+import { PendingGrid } from "@/components/history/PendingGrid";
 import { Types } from "mongoose";
 import type { PublishStatus } from "@/lib/db/models/Video";
 
@@ -36,6 +36,17 @@ interface LeanJob {
 
 type VideoWithJob = LeanVideo & { job: LeanJob | null };
 
+function toPlain(v: VideoWithJob) {
+  return {
+    _id: String(v._id),
+    title: v.title,
+    platform: v.platform,
+    driveWebViewLink: v.driveWebViewLink ?? null,
+    createdAt: v.createdAt ? v.createdAt.toISOString() : undefined,
+    thumbnail: v.job?.thumbnail ?? null,
+  };
+}
+
 async function fetchVideos(): Promise<VideoWithJob[]> {
   await connectDB();
 
@@ -54,9 +65,13 @@ async function fetchVideos(): Promise<VideoWithJob[]> {
   }));
 }
 
-function VideoCard({ video, showPublish }: { video: VideoWithJob; showPublish: boolean }) {
+function VideoCard({ video }: { video: VideoWithJob }) {
+  const videoId = String(video._id);
   return (
-    <div className="rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden flex flex-col">
+    <a
+      href={`/review/${videoId}`}
+      className="rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden flex flex-col hover:border-[var(--color-accent)]/60 transition-colors cursor-pointer"
+    >
       {video.job?.thumbnail && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -91,35 +106,11 @@ function VideoCard({ video, showPublish }: { video: VideoWithJob; showPublish: b
           </p>
         )}
 
-        {video.driveWebViewLink && (
-          <a
-            href={video.driveWebViewLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-[var(--color-accent)] hover:underline"
-          >
-            View in Drive
-          </a>
-        )}
-
-        {video.externalId && (
-          <a
-            href={`https://youtube.com/shorts/${video.externalId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-[var(--color-accent)] hover:underline"
-          >
-            View on YouTube
-          </a>
-        )}
-
-        {showPublish && (
-          <div className="mt-auto pt-2">
-            <PublishButton videoId={String(video._id)} />
-          </div>
-        )}
+        <span className="text-xs text-[var(--color-accent)] mt-auto pt-1">
+          Revisar →
+        </span>
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -143,11 +134,7 @@ export default async function HistoryPage() {
         {pending.length === 0 ? (
           <p className="text-sm text-[var(--color-muted)]">No videos waiting to be published.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pending.map((video) => (
-              <VideoCard key={String(video._id)} video={video} showPublish />
-            ))}
-          </div>
+          <PendingGrid videos={pending.map(toPlain)} />
         )}
       </section>
 
@@ -163,7 +150,7 @@ export default async function HistoryPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {published.map((video) => (
-              <VideoCard key={String(video._id)} video={video} showPublish={false} />
+              <VideoCard key={String(video._id)} video={video} />
             ))}
           </div>
         )}

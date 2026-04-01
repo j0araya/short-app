@@ -8,7 +8,7 @@ export const projectConfigSchema = z.object({
     feed: z.enum(["topstories", "newstories", "beststories"]).default("topstories"),
     limit: z.number().int().min(1).max(30).default(5),
   }).default({ feed: "topstories", limit: 5 }),
-  platforms: z.array(z.enum(["youtube", "tiktok", "instagram"])).min(1),
+  platforms: z.array(z.enum(["youtube", "tiktok", "instagram", "gemini", "leonardo"])).min(1),
   schedule: z.object({
     frequency: z.enum(["30m", "1h", "2h", "6h", "12h", "24h"]),
   }),
