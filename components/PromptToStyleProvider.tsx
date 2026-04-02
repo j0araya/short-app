@@ -6,72 +6,42 @@ import type { AIProvider, ElementContext, GeneratedChanges } from 'prompt-to-sty
 
 interface PromptToStyleProviderProps {
   enabled?: boolean;
-  apiKey?: string;
   children: React.ReactNode;
 }
 
 /**
- * OpenAI-powered AI Provider for PromptToStyle
+ * Secure AI Provider that calls our backend instead of OpenAI directly
+ * This keeps API keys server-side and prevents client exposure
  */
-const createOpenAIProvider = (apiKey: string): AIProvider => ({
+const createSecureAIProvider = (): AIProvider => ({
   async generate(prompt: string, context: ElementContext): Promise<GeneratedChanges> {
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('/api/prompt-to-style/generate', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a UI modification assistant. Given a user prompt and element context, return JSON with changes to apply.
-
-Response format:
-{
-  "type": "style" | "class" | "html" | "attribute" | "insert" | "remove",
-  "styles": { "property": "value" },
-  "classesToAdd": ["class1"],
-  "classesToRemove": ["class2"],
-  "html": "new content",
-  "attributes": { "attr": "value" },
-  "cssRules": [".custom { color: red; }"],
-  "explanation": "What you changed and why"
-}
-
-Only return valid JSON. Be concise but precise.`,
-            },
-            {
-              role: 'user',
-              content: `Modify this element: "${prompt}"
-
-Element: ${context.selector}
-Current classes: ${context.classes.join(', ')}
-Current inline styles: ${context.inlineStyles || 'none'}
-
-Return JSON with the changes to apply.`,
-            },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.7,
-          max_tokens: 500,
+          prompt,
+          context: {
+            selector: context.selector,
+            classes: context.classes,
+            inlineStyles: context.inlineStyles,
+          },
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API error: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      const changes = JSON.parse(data.choices[0].message.content);
-
+      const changes = await response.json();
       return changes;
     } catch (error) {
       console.error('AI Provider error:', error);
       
-      // Fallback: return a simple style change
+      // Fallback: return a simple error response
       return {
         type: 'style',
         styles: {},
@@ -84,6 +54,9 @@ Return JSON with the changes to apply.`,
 /**
  * PromptToStyle Provider Component for Next.js
  * 
+ * This provider enables live UI editing via natural language prompts.
+ * API key is kept server-side for security.
+ * 
  * Usage:
  * ```tsx
  * import { PromptToStyleProvider } from '@/components/PromptToStyleProvider';
@@ -92,7 +65,7 @@ Return JSON with the changes to apply.`,
  *   return (
  *     <html>
  *       <body>
- *         <PromptToStyleProvider apiKey={process.env.NEXT_PUBLIC_OPENAI_API_KEY}>
+ *         <PromptToStyleProvider enabled={true}>
  *           {children}
  *         </PromptToStyleProvider>
  *       </body>
@@ -100,10 +73,15 @@ Return JSON with the changes to apply.`,
  *   );
  * }
  * ```
+ * 
+ * How to use:
+ * 1. Press Ctrl+Shift+E (or Cmd+Shift+E on Mac) to activate
+ * 2. Hover over any element to see the overlay
+ * 3. Click to select, then enter your prompt (e.g., "make it red", "add padding")
+ * 4. Review changes and commit when done
  */
 export function PromptToStyleProvider({
   enabled = false,
-  apiKey,
   children,
 }: PromptToStyleProviderProps) {
   const ptsRef = useRef<PromptToStyle | null>(null);
@@ -112,15 +90,9 @@ export function PromptToStyleProvider({
     // Only initialize on client side
     if (typeof window === 'undefined') return;
 
-    // Require API key
-    if (!apiKey) {
-      console.warn('PromptToStyle: No API key provided. Set NEXT_PUBLIC_OPENAI_API_KEY env variable.');
-      return;
-    }
-
-    // Initialize PromptToStyle
+    // Initialize PromptToStyle with secure backend provider
     const pts = new PromptToStyle({
-      aiProvider: createOpenAIProvider(apiKey),
+      aiProvider: createSecureAIProvider(),
       enabled,
       theme: {
         primaryColor: '#3b82f6',
@@ -140,8 +112,6 @@ export function PromptToStyleProvider({
       onCommit: async (changes) => {
         console.log('[PromptToStyle] Committing changes:', changes.length);
 
-        // TODO: Send to your backend to create MR
-        // This would be implemented by the /developer agent
         try {
           const response = await fetch('/api/prompt-to-style/commit', {
             method: 'POST',
@@ -171,12 +141,14 @@ export function PromptToStyleProvider({
       (window as any).promptToStyle = pts;
     }
 
+    console.log('[PromptToStyle] Initialized. Press Ctrl+Shift+E (Cmd+Shift+E on Mac) to activate.');
+
     // Cleanup on unmount
     return () => {
       pts.destroy();
       ptsRef.current = null;
     };
-  }, [apiKey, enabled]);
+  }, [enabled]);
 
   return <>{children}</>;
 }
