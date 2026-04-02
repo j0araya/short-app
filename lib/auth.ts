@@ -12,12 +12,19 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      console.log("=== NextAuth signIn callback ===");
+      console.log("User email:", user.email);
+      console.log("Allowed email:", ALLOWED_EMAIL);
+      console.log("Email matches:", user.email === ALLOWED_EMAIL);
+      
       // Only allow clipshortnews@gmail.com
       if (user.email === ALLOWED_EMAIL) {
+        console.log("✅ Sign in ALLOWED");
         return true;
       }
       
       // Reject all other emails
+      console.log("❌ Sign in REJECTED");
       return false;
     },
     async session({ session, token }) {
