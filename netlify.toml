@@ -2,7 +2,16 @@
   command = "npm run build"
   publish = ".next"
 
+# NextAuth routes MUST be handled by Next.js (NOT proxied)
+# These rules MUST come BEFORE the general /api/* proxy rule
+[[redirects]]
+  from = "/api/auth/*"
+  to = "/.netlify/functions/___netlify-server-handler"
+  status = 200
+  force = true
+
 # Proxy /api/* requests to local backend via Cloudflare Tunnel
+# (excluding /api/auth/* which is handled above)
 [[redirects]]
   from = "/api/*"
   to = "https://shorteam-api.j0araya.com/:splat"
