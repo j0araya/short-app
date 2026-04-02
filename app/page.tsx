@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { LoginButton } from "@/components/LoginButton";
+import { getVersion } from "@/lib/version";
 import "./landing.css";
 
 export const metadata: Metadata = {
@@ -9,6 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default function LandingPage() {
+  const version = getVersion();
+  
   return (
     <main className="landing-container">
       {/* Atmospheric background layers */}
@@ -85,8 +88,8 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="footer-meta">
-            <span className="footer-year">2026</span>
-            <span className="footer-version">v2.1.0</span>
+            <span className="footer-year">{new Date().getFullYear()}</span>
+            <span className="footer-version">{version}</span>
           </div>
         </div>
       </footer>
