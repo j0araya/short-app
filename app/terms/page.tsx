@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 };
 
 const LAST_UPDATED = "April 2, 2026";
-const APP_NAME = "short-ai-team";
+const APP_NAME = "short-team";
 const APP_DISPLAY_NAME = "Short App";
 const CONTACT_EMAIL = "contact@short-app.dev";
 
