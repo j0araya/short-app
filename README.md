@@ -20,6 +20,29 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## PromptToStyle Integration
+
+This project includes **prompt-to-style**, a library that enables visual DOM modification through AI-powered natural language prompts.
+
+### Features
+
+- Visual element selection with hover
+- AI-powered modifications via natural language
+- Undo/redo and version history
+- Automatic merge request creation
+- LocalStorage persistence
+
+### Quick Start
+
+See [PROMPT_TO_STYLE.md](./PROMPT_TO_STYLE.md) for full integration guide.
+
+**TL;DR:**
+
+1. Set `NEXT_PUBLIC_OPENAI_API_KEY` in `.env`
+2. Add `<PromptToStyleProvider>` to your layout
+3. Add `<PromptToStyleControls />` to any page
+4. Press `Ctrl+Shift+E` to enable, hover and click elements, enter prompts
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
