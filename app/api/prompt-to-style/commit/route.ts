@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { DOMChange } from 'prompt-to-style';
+// import type { DOMChange } from 'prompt-to-style';
+type DOMChange = any; // TODO: Import from prompt-to-style package
 
 /**
  * POST /api/prompt-to-style/commit
