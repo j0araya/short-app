@@ -1,11 +1,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-// import { PromptToStyle } from 'prompt-to-style';
-// import type { AIProvider, ElementContext, GeneratedChanges } from 'prompt-to-style';
-type AIProvider = any;
-type ElementContext = any;
-type GeneratedChanges = any;
+import { PromptToStyle } from 'prompt-to-style';
+import type { AIProvider, ElementContext, GeneratedChanges } from 'prompt-to-style';
 
 interface PromptToStyleProviderProps {
   enabled?: boolean;
@@ -109,10 +106,9 @@ export function PromptToStyleProvider({
   apiKey,
   children,
 }: PromptToStyleProviderProps) {
-  const ptsRef = useRef<any | null>(null);
+  const ptsRef = useRef<PromptToStyle | null>(null);
 
   useEffect(() => {
-    // TODO: Re-enable when prompt-to-style package is available
     // Only initialize on client side
     if (typeof window === 'undefined') return;
 
@@ -123,63 +119,63 @@ export function PromptToStyleProvider({
     }
 
     // Initialize PromptToStyle
-    // const pts = new PromptToStyle({
-    //   aiProvider: createOpenAIProvider(apiKey),
-    //   enabled,
-    //   theme: {
-    //     primaryColor: '#3b82f6',
-    //     backgroundColor: '#ffffff',
-    //     textColor: '#1f2937',
-    //     borderColor: '#e5e7eb',
-    //     hoverOverlayColor: 'rgba(59, 130, 246, 0.15)',
-    //     borderRadius: '8px',
-    //   },
-    //   onChange: (change) => {
-    //     console.log('[PromptToStyle] Change applied:', {
-    //       prompt: change.prompt,
-    //       selector: change.context.selector,
-    //       type: change.changes.type,
-    //     });
-    //   },
-    //   onCommit: async (changes) => {
-    //     console.log('[PromptToStyle] Committing changes:', changes.length);
+    const pts = new PromptToStyle({
+      aiProvider: createOpenAIProvider(apiKey),
+      enabled,
+      theme: {
+        primaryColor: '#3b82f6',
+        backgroundColor: '#ffffff',
+        textColor: '#1f2937',
+        borderColor: '#e5e7eb',
+        hoverOverlayColor: 'rgba(59, 130, 246, 0.15)',
+        borderRadius: '8px',
+      },
+      onChange: (change) => {
+        console.log('[PromptToStyle] Change applied:', {
+          prompt: change.prompt,
+          selector: change.context.selector,
+          type: change.changes.type,
+        });
+      },
+      onCommit: async (changes) => {
+        console.log('[PromptToStyle] Committing changes:', changes.length);
 
-    //     // TODO: Send to your backend to create MR
-    //     // This would be implemented by the /developer agent
-    //     try {
-    //       const response = await fetch('/api/prompt-to-style/commit', {
-    //         method: 'POST',
-    //         headers: { 'Content-Type': 'application/json' },
-    //         body: JSON.stringify({ changes }),
-    //       });
+        // TODO: Send to your backend to create MR
+        // This would be implemented by the /developer agent
+        try {
+          const response = await fetch('/api/prompt-to-style/commit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ changes }),
+          });
 
-    //       if (response.ok) {
-    //         const { mrUrl } = await response.json();
-    //         console.log('[PromptToStyle] MR created:', mrUrl);
-    //         alert(`Changes committed! MR: ${mrUrl}`);
-    //       } else {
-    //         throw new Error('Failed to create MR');
-    //       }
-    //     } catch (error) {
-    //       console.error('[PromptToStyle] Commit error:', error);
-    //       alert('Failed to commit changes. Check console for details.');
-    //     }
-    //   },
-    // });
+          if (response.ok) {
+            const { mrUrl } = await response.json();
+            console.log('[PromptToStyle] MR created:', mrUrl);
+            alert(`Changes committed! MR: ${mrUrl}`);
+          } else {
+            throw new Error('Failed to create MR');
+          }
+        } catch (error) {
+          console.error('[PromptToStyle] Commit error:', error);
+          alert('Failed to commit changes. Check console for details.');
+        }
+      },
+    });
 
-    // pts.init();
-    // ptsRef.current = pts;
+    pts.init();
+    ptsRef.current = pts;
 
-    // // Expose to window for debugging
-    // if (typeof window !== 'undefined') {
-    //   (window as any).promptToStyle = pts;
-    // }
+    // Expose to window for debugging
+    if (typeof window !== 'undefined') {
+      (window as any).promptToStyle = pts;
+    }
 
-    // // Cleanup on unmount
-    // return () => {
-    //   pts.destroy();
-    //   ptsRef.current = null;
-    // };
+    // Cleanup on unmount
+    return () => {
+      pts.destroy();
+      ptsRef.current = null;
+    };
   }, [apiKey, enabled]);
 
   return <>{children}</>;

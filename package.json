@@ -18,7 +18,7 @@
     "next": "16.2.1",
     "next-auth": "^4.24.13",
     "openai": "^6.33.0",
-    "prompt-to-style": "file:../prompt-to-style",
+    "prompt-to-style": "file:./packages/prompt-to-style",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "sharp": "^0.34.5",
