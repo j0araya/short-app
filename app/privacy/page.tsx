@@ -5,8 +5,9 @@ export const metadata: Metadata = {
   description: "Privacy Policy for Short App automated content pipeline.",
 };
 
-const LAST_UPDATED = "March 29, 2026";
-const APP_NAME = "Short App";
+const LAST_UPDATED = "April 2, 2026";
+const APP_NAME = "short-ai-team";
+const APP_DISPLAY_NAME = "Short App";
 const CONTACT_EMAIL = "contact@short-app.dev";
 
 export default function PrivacyPage() {
@@ -14,18 +15,23 @@ export default function PrivacyPage() {
     <div className="max-w-3xl mx-auto px-6 py-12 text-[var(--color-text)]">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-3xl font-bold mb-2">{APP_NAME}</h1>
+        <h1 className="text-3xl font-bold mb-2">{APP_DISPLAY_NAME}</h1>
         <h2 className="text-xl font-semibold text-[var(--color-muted)] mb-1">
           Privacy Policy
         </h2>
-        <p className="text-sm text-[var(--color-muted)]">Last updated: {LAST_UPDATED}</p>
+        <p className="text-sm text-[var(--color-muted)]">
+          Last updated: {LAST_UPDATED}
+        </p>
+        <p className="text-xs text-[var(--color-muted)] mt-1">
+          TikTok App Name: <span className="font-mono">{APP_NAME}</span>
+        </p>
       </div>
 
       <div className="space-y-10 text-sm leading-relaxed">
         {/* 1 */}
         <Section title="1. Introduction">
           <p>
-            {APP_NAME} (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;the Service&rdquo;) is an
+            {APP_NAME} (also known as &ldquo;{APP_DISPLAY_NAME}&rdquo;) (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;the Service&rdquo;, &ldquo;the App&rdquo;) is an
             automated content pipeline that generates and publishes short-form video content to
             social media platforms on behalf of its operators.
           </p>
@@ -253,7 +259,7 @@ export default function PrivacyPage() {
         {/* 9 */}
         <Section title="9. Cookies and Tracking">
           <p>
-            {APP_NAME} does not use cookies, web beacons, or any client-side tracking
+            {APP_NAME} ({APP_DISPLAY_NAME}) does not use cookies, web beacons, or any client-side tracking
             technologies. No analytics SDKs (Google Analytics, Mixpanel, etc.) are embedded in
             the Service.
           </p>

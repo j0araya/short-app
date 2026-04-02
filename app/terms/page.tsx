@@ -5,8 +5,9 @@ export const metadata: Metadata = {
   description: "Terms of Service for Short App automated content pipeline.",
 };
 
-const LAST_UPDATED = "March 29, 2026";
-const APP_NAME = "Short App";
+const LAST_UPDATED = "April 2, 2026";
+const APP_NAME = "short-ai-team";
+const APP_DISPLAY_NAME = "Short App";
 const CONTACT_EMAIL = "contact@short-app.dev";
 
 export default function TermsPage() {
@@ -14,18 +15,23 @@ export default function TermsPage() {
     <div className="max-w-3xl mx-auto px-6 py-12 text-[var(--color-text)]">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-3xl font-bold mb-2">{APP_NAME}</h1>
+        <h1 className="text-3xl font-bold mb-2">{APP_DISPLAY_NAME}</h1>
         <h2 className="text-xl font-semibold text-[var(--color-muted)] mb-1">
           Terms of Service
         </h2>
-        <p className="text-sm text-[var(--color-muted)]">Last updated: {LAST_UPDATED}</p>
+        <p className="text-sm text-[var(--color-muted)]">
+          Last updated: {LAST_UPDATED}
+        </p>
+        <p className="text-xs text-[var(--color-muted)] mt-1">
+          TikTok App Name: <span className="font-mono">{APP_NAME}</span>
+        </p>
       </div>
 
       <div className="space-y-10 text-sm leading-relaxed">
         {/* 1 */}
         <Section title="1. Acceptance of Terms">
           <p>
-            By accessing or using {APP_NAME} (&ldquo;the Service&rdquo;), you agree to be bound by
+            By accessing or using {APP_NAME} (also known as &ldquo;{APP_DISPLAY_NAME}&rdquo;) (&ldquo;the Service&rdquo;, &ldquo;the App&rdquo;), you agree to be bound by
             these Terms of Service (&ldquo;Terms&rdquo;). If you do not agree to all of these Terms,
             do not use the Service.
           </p>
@@ -39,7 +45,7 @@ export default function TermsPage() {
         {/* 2 */}
         <Section title="2. Description of the Service">
           <p>
-            {APP_NAME} is an automated content pipeline that generates short-form video content
+            {APP_NAME} ({APP_DISPLAY_NAME}) is an automated content pipeline that generates short-form video content
             from publicly available news sources (e.g., Hacker News) and publishes that content
             to connected social media platforms on the operator&rsquo;s behalf.
           </p>
@@ -131,7 +137,7 @@ export default function TermsPage() {
         <Section title="5. Content Ownership and Responsibility">
           <p>
             You retain full ownership of all content published through the Service to your
-            connected platform accounts. {APP_NAME} does not claim any intellectual property
+            connected platform accounts. {APP_NAME} ({APP_DISPLAY_NAME}) does not claim any intellectual property
             rights over your content.
           </p>
           <p className="mt-3">
@@ -260,11 +266,11 @@ export default function TermsPage() {
           <p>
             THE SERVICE IS PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE&rdquo; WITHOUT
             WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. TO THE FULLEST EXTENT PERMITTED BY LAW,{" "}
-            {APP_NAME.toUpperCase()} DISCLAIMS ALL WARRANTIES INCLUDING FITNESS FOR A PARTICULAR
+            {APP_NAME.toUpperCase()} ({APP_DISPLAY_NAME.toUpperCase()}) DISCLAIMS ALL WARRANTIES INCLUDING FITNESS FOR A PARTICULAR
             PURPOSE, MERCHANTABILITY, AND NON-INFRINGEMENT.
           </p>
           <p className="mt-3">
-            {APP_NAME} shall not be liable for any indirect, incidental, special, consequential,
+            {APP_NAME} ({APP_DISPLAY_NAME}) shall not be liable for any indirect, incidental, special, consequential,
             or punitive damages arising from your use of the Service, including but not limited to
             loss of data, platform account suspension, or content removal by third-party platforms.
           </p>
