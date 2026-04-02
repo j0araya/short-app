@@ -1,0 +1,22 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# Proxy /api/* requests to local backend via Cloudflare Tunnel
+[[redirects]]
+  from = "/api/*"
+  to = "https://shorteam-api.j0araya.com/:splat"
+  status = 200
+  force = true
+
+# Proxy /_next/static/* to Netlify's static assets
+[[redirects]]
+  from = "/_next/static/*"
+  to = "/_next/static/:splat"
+  status = 200
+
+# All other routes go to Next.js SSR function
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/___netlify-server-handler"
+  status = 200

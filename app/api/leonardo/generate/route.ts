@@ -49,16 +49,16 @@ export async function POST(req: NextRequest) {
       youtubeHashtags:    "#Shorts #AI #Leonardo",
     });
 
-    // Start the generation — Leonardo will POST to webhookUrl when done
-    const generationId = await startTextToVideo({
-      prompt,
-      width:              480,
-      height:             832,
-      resolution:         "RESOLUTION_720",
-      frameInterpolation: true,
-      promptEnhance:      true,
-      webhookCallbackUrl: webhookUrl,
-    });
+     // Start the generation — Leonardo will POST to webhookUrl when done
+     // (webhook is configured globally on the API key)
+     const generationId = await startTextToVideo({
+       prompt,
+       width:              480,
+       height:             832,
+       resolution:         "RESOLUTION_720",
+       frameInterpolation: true,
+       promptEnhance:      true,
+     });
 
     // Store the generationId on the video so the webhook can find it
     await Video.findByIdAndUpdate(video._id, {

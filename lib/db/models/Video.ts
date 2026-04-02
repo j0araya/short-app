@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 import type { ContentType } from "./Job";
 
-export type PublishStatus = "pending_publish" | "published";
+export type PublishStatus = "generating" | "pending_publish" | "published";
 
 export interface IVideo extends Document {
   _id: Types.ObjectId;
@@ -53,7 +53,7 @@ const VideoSchema = new Schema<IVideo>(
     publishedAt: { type: Date, default: null },
     publishStatus: {
       type: String,
-      enum: ["pending_publish", "published"],
+      enum: ["generating", "pending_publish", "published"],
       default: "pending_publish",
     },
     sourceArticleUrl: { type: String, default: null },

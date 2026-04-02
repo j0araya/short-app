@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { LoginButton } from "@/components/LoginButton";
 import "./landing.css";
 
 export const metadata: Metadata = {
@@ -40,13 +41,7 @@ export default function LandingPage() {
           </div>
 
           <div className="card-body">
-            <Link href="/dashboard" className="login-btn">
-              <span className="btn-bg" />
-              <span className="btn-text">Initialize Session</span>
-              <svg className="btn-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M10 4L16 10L10 16M16 10H4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </Link>
+            <LoginButton />
 
             <div className="divider">
               <span>SECURE CONNECTION</span>

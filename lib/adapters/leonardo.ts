@@ -53,6 +53,7 @@ export interface LeonardoWebhookPayload {
       id: string;
       status: "COMPLETE" | "FAILED" | string;
       videoUrl?: string;
+      motionMP4URL?: string;
       videos?: Array<{ url: string }>;
       generated_videos?: Array<{ url: string }>;
       prompt?: string;
@@ -96,18 +97,15 @@ async function leonardoFetch(
 export async function startTextToVideo(
   params: LeonardoTextToVideoParams
 ): Promise<string> {
-  const body = {
-    prompt:             params.prompt,
-    width:              params.width  ?? 480,
-    height:             params.height ?? 832,
-    resolution:         params.resolution ?? "RESOLUTION_720",
-    frameInterpolation: params.frameInterpolation ?? true,
-    isPublic:           false,
-    promptEnhance:      params.promptEnhance ?? true,
-    ...(params.webhookCallbackUrl
-      ? { webhookCallbackUrl: params.webhookCallbackUrl }
-      : {}),
-  };
+   const body = {
+     prompt:             params.prompt,
+     width:              params.width  ?? 480,
+     height:             params.height ?? 832,
+     resolution:         params.resolution ?? "RESOLUTION_720",
+     frameInterpolation: params.frameInterpolation ?? true,
+     isPublic:           false,
+     promptEnhance:      params.promptEnhance ?? true,
+   };
 
   const res = await leonardoFetch("/generations-text-to-video", {
     method: "POST",
@@ -121,13 +119,16 @@ export async function startTextToVideo(
     );
   }
 
-  const data = await res.json() as {
-    videoGenerationJob?: { generationId?: string };
-    generationId?: string;
-  };
+   const data = await res.json() as {
+     videoGenerationJob?: { generationId?: string };
+     motionVideoGenerationJob?: { generationId?: string };
+     generationId?: string;
+   };
 
-  const generationId =
-    data.videoGenerationJob?.generationId ?? data.generationId;
+   const generationId =
+     data.motionVideoGenerationJob?.generationId ??
+     data.videoGenerationJob?.generationId ??
+     data.generationId;
 
   if (!generationId) {
     throw new Error(
@@ -231,6 +232,7 @@ export function extractVideoUrlFromWebhook(
 
   return (
     obj.videoUrl ??
+    obj.motionMP4URL ??
     obj.videos?.[0]?.url ??
     obj.generated_videos?.[0]?.url ??
     null
