@@ -20,16 +20,6 @@ export const authOptions: NextAuthOptions = {
       // Reject all other emails
       return false;
     },
-    async redirect({ url, baseUrl }) {
-      // After successful sign in, always redirect to dashboard
-      // Unless explicitly redirecting to sign out or error page
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      if (url.includes("/api/auth/signout") || url.includes("/api/auth/error")) {
-        return url;
-      }
-      // Default: redirect to dashboard after successful login
-      return `${baseUrl}/dashboard`;
-    },
     async session({ session, token }) {
       // Add user info to session
       if (session.user) {
