@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
       <body className="h-full antialiased">
         <AuthProvider>
-          <PromptToStyleProvider enabled={true}>
+          <PromptToStyleProvider enabled={false}>
             {children}
           </PromptToStyleProvider>
         </AuthProvider>
